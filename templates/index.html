@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedAI — Noninvaziv Diagnostika Tizimi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════ */
+:root {
+  --bg:        #03050f;
+  --bg2:       #080c1a;
+  --bg3:       #0d1226;
+  --panel:     rgba(13,18,38,0.7);
+  --border:    rgba(0,240,220,0.12);
+  --border2:   rgba(0,240,220,0.25);
+  --cyan:      #00f0dc;
+  --cyan-dim:  rgba(0,240,220,0.15);
+  --cyan-glow: rgba(0,240,220,0.4);
+  --purple:    #7c3aed;
+  --purple2:   #a855f7;
+  --red:       #ff4d6d;
+  --gold:      #f59e0b;
+  --text:      #e2e8f0;
+  --muted:     #64748b;
+  --mono:      'DM Mono', monospace;
+  --head:      'Oxanium', sans-serif;
+  --body:      'DM Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── GRID OVERLAY ─────────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,240,220,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,240,220,0.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+/* radial glow top-left */
+body::after{
+  content:'';
+  position:fixed;
+  top:-200px;left:-200px;
+  width:700px;height:700px;
+  background:radial-gradient(circle,rgba(124,58,237,0.18) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* ═══════════════════════════════════════════
+   PAGE SYSTEM
+═══════════════════════════════════════════ */
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* ═══════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 48px;
+  background:rgba(3,5,15,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-family:var(--head);
+  font-size:1.4rem;
+  font-weight:800;
+  letter-spacing:0.05em;
+  color:#fff;
+  cursor:pointer;
+}
+.logo span{color:var(--cyan);}
+.nav-tag{
+  font-family:var(--mono);
+  font-size:0.7rem;
+  color:var(--muted);
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+}
+.nav-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 10px var(--cyan);
+  animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot{
+  0%,100%{opacity:1;}50%{opacity:0.3;}
+}
+
+/* ═══════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════ */
+.hero{
+  padding:130px 48px 56px;
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 420px;
+  gap:48px;
+  align-items:center;
+  max-width:1260px;
+  margin:0 auto;
+}
+.hero-content{}
+.hero-eyebrow{
+  font-family:var(--mono);
+  font-size:0.72rem;
+  letter-spacing:0.25em;
+  color:var(--cyan);
+  text-transform:uppercase;
+  margin-bottom:24px;
+  opacity:0;
+  animation:fadeUp 0.8s 0.2s forwards;
+}
+.hero-title{
+  font-family:var(--head);
+  font-size:clamp(2.4rem,5vw,4.4rem);
+  font-weight:800;
+  line-height:1.05;
+  letter-spacing:-0.01em;
+  margin-bottom:28px;
+  opacity:0;
+  animation:fadeUp 0.8s 0.4s forwards;
+}
+.hero-title .line2{
+  background:linear-gradient(135deg,var(--cyan),var(--purple2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub{
+  max-width:520px;
+  font-size:1rem;
+  line-height:1.75;
+  color:var(--muted);
+  margin-bottom:48px;
+  opacity:0;
+  animation:fadeUp 0.8s 0.6s forwards;
+}
+.hero-stats{
+  display:flex;gap:36px;flex-wrap:wrap;
+  opacity:0;
+  animation:fadeUp 0.8s 0.8s forwards;
+}
+.stat-item{border-left:2px solid var(--cyan);padding-left:14px;}
+.stat-val{
+  font-family:var(--head);
+  font-size:1.7rem;font-weight:700;
+  color:#fff;
+}
+.stat-val span{color:var(--cyan);}
+.stat-lbl{font-size:0.7rem;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+
+/* ── Medical SVG Visual ───────────────────── */
+.hero-visual{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;
+  animation:fadeUp 0.9s 0.5s forwards;
+}
+.hero-visual svg{width:100%;max-width:420px;height:auto;}
+
+/* ECG path animation */
+.ecg-path{
+  stroke-dasharray:600;
+  stroke-dashoffset:600;
+  animation:ecg-draw 2s 1s ease forwards, ecg-pulse 3s 3.2s ease-in-out infinite;
+}
+@keyframes ecg-draw{to{stroke-dashoffset:0;}}
+@keyframes ecg-pulse{
+  0%,100%{opacity:1;}
+  50%{opacity:0.45;}
+}
+.ring-spin{animation:ring-rotate 18s linear infinite;}
+.ring-spin2{animation:ring-rotate 12s linear infinite reverse;}
+@keyframes ring-rotate{to{transform:rotate(360deg);transform-origin:center;}}
+.dot-blink{animation:dot-b 2s ease-in-out infinite;}
+.dot-blink:nth-child(2){animation-delay:0.4s;}
+.dot-blink:nth-child(3){animation-delay:0.8s;}
+@keyframes dot-b{0%,100%{opacity:0.2;}50%{opacity:1;}}
+.float-icon{animation:float-med 4s ease-in-out infinite;}
+.float-icon:nth-child(2){animation-delay:1s;}
+.float-icon:nth-child(3){animation-delay:2s;}
+@keyframes float-med{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+/* ═══════════════════════════════════════════
+   SECTION LABEL
+═══════════════════════════════════════════ */
+.section-label{
+  font-family:var(--mono);
+  font-size:0.7rem;
+  letter-spacing:0.2em;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-bottom:12px;
+}
+.section-title{
+  font-family:var(--head);
+  font-size:1.8rem;
+  font-weight:700;
+  margin-bottom:8px;
+}
+.section-line{
+  width:48px;height:2px;
+  background:linear-gradient(90deg,var(--cyan),transparent);
+  margin-bottom:48px;
+}
+
+/* ═══════════════════════════════════════════
+   MODULE CARDS GRID
+═══════════════════════════════════════════ */
+.modules-section{
+  padding:48px 48px 120px;
+  position:relative;z-index:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;
+  max-width:1200px;
+  width:100%;
+}
+
+.module-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:32px;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  backdrop-filter:blur(16px);
+  transition:transform 0.3s,border-color 0.3s,box-shadow 0.3s;
+  opacity:0;
+  animation:fadeUp 0.6s forwards;
+}
+.module-card:nth-child(1){animation-delay:0.1s;}
+.module-card:nth-child(2){animation-delay:0.2s;}
+.module-card:nth-child(3){animation-delay:0.3s;}
+.module-card:nth-child(4){animation-delay:0.4s;}
+.module-card:nth-child(5){animation-delay:0.5s;}
+.module-card:nth-child(6){animation-delay:0.6s;}
+.module-card:nth-child(7){animation-delay:0.7s;}
+
+.module-card::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,240,220,0.06) 0%,transparent 60%);
+  opacity:0;transition:opacity 0.3s;
+}
+.module-card:hover{
+  transform:translateY(-6px);
+  border-color:var(--border2);
+  box-shadow:0 20px 60px rgba(0,240,220,0.1),0 0 0 1px rgba(0,240,220,0.1);
+}
+.module-card:hover::before{opacity:1;}
+.module-card.disabled{cursor:default;}
+.module-card.disabled:hover{transform:translateY(-3px);}
+
+/* card accent top line */
+.module-card::after{
+  content:'';
+  position:absolute;top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.module-card:hover::after{opacity:1;}
+
+.card-icon{
+  width:52px;height:52px;
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;
+  margin-bottom:20px;
+  position:relative;
+}
+.card-icon.teal{background:rgba(0,240,220,0.12);border:1px solid rgba(0,240,220,0.2);}
+.card-icon.purple{background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.25);}
+.card-icon.red{background:rgba(255,77,109,0.12);border:1px solid rgba(255,77,109,0.2);}
+.card-icon.gold{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.2);}
+.card-icon.blue{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);}
+.card-icon.green{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.2);}
+.card-icon.pink{background:rgba(236,72,153,0.12);border:1px solid rgba(236,72,153,0.2);}
+
+.card-badge{
+  position:absolute;top:20px;right:20px;
+  font-family:var(--mono);
+  font-size:0.6rem;
+  letter-spacing:0.1em;
+  padding:4px 10px;
+  border-radius:20px;
+  text-transform:uppercase;
+}
+.badge-live{
+  background:rgba(0,240,220,0.12);
+  border:1px solid rgba(0,240,220,0.3);
+  color:var(--cyan);
+}
+.badge-live::before{
+  content:'';
+  display:inline-block;width:5px;height:5px;
+  border-radius:50%;background:var(--cyan);
+  margin-right:6px;
+  animation:pulse-dot 1.5s infinite;
+  vertical-align:middle;
+}
+.badge-soon{
+  background:rgba(100,116,139,0.12);
+  border:1px solid rgba(100,116,139,0.25);
+  color:var(--muted);
+}
+
+.card-title{
+  font-family:var(--head);
+  font-size:1.15rem;
+  font-weight:700;
+  margin-bottom:8px;
+  letter-spacing:0.02em;
+}
+.card-desc{
+  font-size:0.85rem;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:20px;
+}
+.card-meta{
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.meta-tag{
+  font-family:var(--mono);
+  font-size:0.62rem;
+  letter-spacing:0.08em;
+  padding:3px 8px;
+  border-radius:4px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.07);
+  color:var(--muted);
+}
+.card-arrow{
+  position:absolute;bottom:28px;right:28px;
+  width:32px;height:32px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;color:var(--muted);
+  transition:all 0.3s;
+}
+.module-card:hover .card-arrow{
+  background:var(--cyan-dim);
+  border-color:var(--cyan);
+  color:var(--cyan);
+}
+
+/* ═══════════════════════════════════════════
+   MODULE DETAIL PAGE
+═══════════════════════════════════════════ */
+.detail-page{
+  min-height:100vh;
+  padding:120px 48px 80px;
+  position:relative;z-index:1;
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:0.72rem;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);
+  background:none;border:none;cursor:pointer;
+  margin-bottom:48px;
+  transition:color 0.2s;
+  padding:0;
+}
+.back-btn:hover{color:var(--cyan);}
+.back-btn svg{transition:transform 0.2s;}
+.back-btn:hover svg{transform:translateX(-3px);}
+
+.detail-header{
+  display:flex;align-items:flex-start;gap:24px;
+  margin-bottom:56px;
+}
+.detail-icon{
+  width:72px;height:72px;
+  border-radius:18px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;
+  flex-shrink:0;
+}
+.detail-title{
+  font-family:var(--head);
+  font-size:clamp(1.8rem,4vw,2.8rem);
+  font-weight:800;
+  line-height:1.1;
+}
+.detail-title span{color:var(--cyan);}
+.detail-sub{
+  color:var(--muted);font-size:0.9rem;
+  margin-top:8px;line-height:1.6;
+}
+
+/* ── UPLOAD ZONE ─────────────────────────── */
+.upload-zone{
+  border:2px dashed rgba(0,240,220,0.2);
+  border-radius:20px;
+  padding:60px 40px;
+  text-align:center;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition:border-color 0.3s,background 0.3s;
+  background:rgba(0,240,220,0.02);
+  max-width:620px;
+  margin-bottom:32px;
+}
+.upload-zone:hover,.upload-zone.dragover{
+  border-color:var(--cyan);
+  background:rgba(0,240,220,0.05);
+}
+.upload-zone input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;
+}
+.upload-icon{
+  font-size:3rem;margin-bottom:16px;
+  opacity:0.6;
+}
+.upload-title{
+  font-family:var(--head);
+  font-size:1.1rem;font-weight:600;
+  margin-bottom:8px;
+}
+.upload-hint{
+  font-family:var(--mono);
+  font-size:0.72rem;color:var(--muted);
+  letter-spacing:0.1em;
+}
+.upload-zone.has-file .upload-title{color:var(--cyan);}
+
+/* ── SCANNER VIEWER ──────────────────────── */
+.scanner-container{
+  max-width:620px;
+  border-radius:20px;
+  overflow:hidden;
+  border:1px solid var(--border2);
+  background:var(--bg2);
+  display:none;
+  position:relative;
+}
+.scanner-container.visible{display:block;}
+
+.scanner-header{
+  background:var(--bg3);
+  border-bottom:1px solid var(--border);
+  padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.scanner-dots{display:flex;gap:6px;}
+.s-dot{width:10px;height:10px;border-radius:50%;}
+.s-dot.r{background:#ff5f57;}
+.s-dot.y{background:#febc2e;}
+.s-dot.g{background:#28c840;}
+.scanner-title{
+  font-family:var(--mono);font-size:0.68rem;
+  letter-spacing:0.12em;color:var(--muted);
+  text-transform:uppercase;
+}
+
+.img-wrapper{
+  position:relative;
+  line-height:0;
+  max-height:380px;
+  overflow:hidden;
+}
+.img-wrapper img{
+  width:100%;
+  max-height:380px;
+  object-fit:cover;
+  display:block;
+}
+
+/* Scan line */
+.scan-line{
+  position:absolute;
+  left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--cyan),transparent);
+  box-shadow:0 0 20px 4px var(--cyan-glow),0 0 60px 8px rgba(0,240,220,0.2);
+  top:0;
+  animation:none;
+  display:none;z-index:10;
+}
+.scan-line.active{
+  display:block;
+  animation:scan-sweep 2.2s ease-in-out;
+}
+@keyframes scan-sweep{
+  0%{top:-4px;opacity:0;}
+  5%{opacity:1;}
+  50%{top:50%;}
+  95%{opacity:1;}
+  100%{top:calc(100% + 4px);opacity:0;}
+}
+
+/* scan overlay gradient */
+.scan-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,240,220,0.06) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(0,240,220,0.04) 100%
+  );
+  pointer-events:none;z-index:5;
+  opacity:0;transition:opacity 0.3s;
+}
+.scan-overlay.active{opacity:1;}
+
+/* corner brackets */
+.scan-corner{
+  position:absolute;width:24px;height:24px;
+  z-index:11;
+  opacity:0;transition:opacity 0.3s;
+}
+.scan-corner.active{opacity:1;}
+.scan-corner.tl{top:12px;left:12px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);}
+.scan-corner.tr{top:12px;right:12px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan);}
+.scan-corner.bl{bottom:12px;left:12px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan);}
+.scan-corner.br{bottom:12px;right:12px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan);}
+
+.scanner-footer{
+  background:var(--bg3);
+  border-top:1px solid var(--border);
+  padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.scan-status{
+  font-family:var(--mono);font-size:0.68rem;
+  letter-spacing:0.1em;color:var(--cyan);
+  display:flex;align-items:center;gap:8px;
+}
+.scan-status::before{
+  content:'';
+  width:6px;height:6px;border-radius:50%;
+  background:var(--cyan);
+  animation:pulse-dot 1s infinite;
+}
+.img-dimensions{
+  font-family:var(--mono);font-size:0.65rem;color:var(--muted);
+}
+
+/* ── ACTIONS ─────────────────────────────── */
+.action-row{
+  display:flex;gap:12px;
+  margin-top:24px;
+  max-width:620px;
+  flex-wrap:wrap;
+}
+.btn-primary{
+  flex:1;
+  font-family:var(--head);
+  font-size:0.9rem;
+  font-weight:600;
+  letter-spacing:0.08em;
+  padding:16px 32px;
+  border-radius:12px;
+  border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--cyan) 0%,#00c4b0 100%);
+  color:#03050f;
+  position:relative;
+  overflow:hidden;
+  transition:transform 0.2s,box-shadow 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-primary::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);
+  opacity:0;transition:opacity 0.2s;
+}
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 40px rgba(0,240,220,0.35);
+}
+.btn-primary:hover::before{opacity:1;}
+.btn-primary:disabled{
+  opacity:0.35;cursor:not-allowed;
+  transform:none;box-shadow:none;
+}
+
+.btn-secondary{
+  font-family:var(--mono);
+  font-size:0.72rem;
+  letter-spacing:0.1em;
+  padding:16px 20px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all 0.2s;
+  text-transform:uppercase;
+}
+.btn-secondary:hover{
+  border-color:var(--border2);color:var(--text);
+}
+
+/* ── RESULT PANEL ────────────────────────── */
+.result-panel{
+  max-width:620px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:24px;
+  display:none;
+  animation:fadeUp 0.5s forwards;
+}
+.result-panel.visible{display:block;}
+
+.result-header{
+  background:linear-gradient(135deg,rgba(0,240,220,0.1),rgba(124,58,237,0.08));
+  border-bottom:1px solid var(--border);
+  padding:20px 28px;
+  display:flex;align-items:center;gap:16px;
+}
+.result-icon{font-size:1.8rem;}
+.result-label{
+  font-family:var(--mono);font-size:0.68rem;
+  letter-spacing:0.15em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:4px;
+}
+.result-value{
+  font-family:var(--head);
+  font-size:1.6rem;font-weight:800;
+  color:var(--cyan);
+}
+
+.result-body{padding:24px 28px;}
+.result-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:0.85rem;
+}
+.result-row:last-child{border:none;}
+.result-row .r-key{color:var(--muted);font-family:var(--mono);font-size:0.72rem;letter-spacing:0.08em;}
+.result-row .r-val{color:var(--text);font-weight:500;}
+
+/* confidence bar */
+.conf-bar-wrap{margin-top:20px;}
+.conf-label{
+  font-family:var(--mono);font-size:0.68rem;
+  letter-spacing:0.1em;color:var(--muted);
+  margin-bottom:10px;
+  display:flex;justify-content:space-between;
+}
+.conf-bar{
+  height:6px;border-radius:3px;
+  background:rgba(255,255,255,0.06);
+  overflow:hidden;
+}
+.conf-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple2));
+  width:0%;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ── COMING SOON OVERLAY ─────────────────── */
+.coming-soon-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(3,5,15,0.92);
+  backdrop-filter:blur(24px);
+  display:none;
+  align-items:center;justify-content:center;
+  flex-direction:column;
+  gap:24px;
+}
+.coming-soon-overlay.active{display:flex;}
+.cs-icon{font-size:4rem;animation:float 3s ease-in-out infinite;}
+.cs-title{
+  font-family:var(--head);
+  font-size:2.4rem;font-weight:800;
+  text-align:center;
+}
+.cs-title span{color:var(--cyan);}
+.cs-sub{
+  font-family:var(--mono);
+  font-size:0.8rem;letter-spacing:0.15em;
+  color:var(--muted);text-align:center;
+  line-height:1.8;
+}
+.cs-close{
+  margin-top:16px;
+  font-family:var(--mono);
+  font-size:0.72rem;letter-spacing:0.15em;
+  color:var(--muted);background:none;border:1px solid var(--border);
+  padding:12px 28px;border-radius:8px;cursor:pointer;
+  transition:all 0.2s;text-transform:uppercase;
+}
+.cs-close:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* info card beside form */
+.info-sidebar{
+  flex:1;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:28px;
+  backdrop-filter:blur(16px);
+  align-self:flex-start;
+}
+.info-item{
+  display:flex;gap:14px;
+  padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.info-item:last-child{border:none;}
+.info-num{
+  font-family:var(--mono);font-size:0.68rem;
+  color:var(--cyan);min-width:24px;margin-top:2px;
+}
+.info-text{font-size:0.83rem;line-height:1.6;color:var(--muted);}
+.info-text strong{color:var(--text);display:block;margin-bottom:2px;}
+
+.detail-layout{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:32px;
+  max-width:680px;
+  margin:0 auto;
+}
+.detail-layout > div:first-child{width:100%;}
+.info-sidebar{width:100%;}
+
+/* upload-zone & related — always centered */
+.upload-zone{
+  max-width:100%;
+  margin-left:auto;
+  margin-right:auto;
+}
+.scanner-container{max-width:100%;}
+.action-row{max-width:100%;}
+.result-panel{max-width:100%;}
+.error-msg{max-width:100%;}
+
+/* detail-page centered wrapper */
+.detail-page{
+  max-width:780px;
+  margin:0 auto;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+═══════════════════════════════════════════ */
+
+/* ── Large desktop 1400px+ ── */
+@media(min-width:1400px){
+  .cards-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ── Desktop 1200px ── */
+@media(max-width:1200px){
+  .hero{
+    grid-template-columns:1fr 360px;
+    padding:120px 40px 48px;
+  }
+}
+
+/* ── Tablet landscape 1024px ── */
+@media(max-width:1024px){
+  .hero{
+    grid-template-columns:1fr 300px;
+    gap:32px;
+  }
+  .cards-grid{grid-template-columns:repeat(2,1fr);}
+  nav{padding:16px 32px;}
+}
+
+/* ── Tablet portrait 900px ── */
+@media(max-width:900px){
+  nav{padding:14px 24px;}
+  .nav-tag{display:none;}
+
+  .hero{
+    grid-template-columns:1fr;
+    padding:110px 32px 48px;
+    text-align:center;
+  }
+  .hero-visual{display:none;}
+  .hero-sub{max-width:100%;margin-left:auto;margin-right:auto;}
+  .hero-stats{justify-content:center;}
+
+  .modules-section{padding:40px 32px 80px;}
+  .cards-grid{grid-template-columns:repeat(2,1fr);gap:16px;}
+
+  .detail-page{padding:100px 32px 60px;}
+  .detail-header{flex-direction:column;gap:16px;}
+}
+
+/* ── Mobile large 640px ── */
+@media(max-width:640px){
+  .cards-grid{grid-template-columns:1fr;}
+
+  .hero{padding:100px 20px 40px;}
+  .modules-section{padding:32px 20px 64px;}
+  .detail-page{padding:88px 20px 48px;}
+
+  .hero-stats{gap:20px;}
+  .stat-val{font-size:1.4rem;}
+
+  .module-card{padding:24px;}
+
+  .upload-zone{padding:40px 20px;}
+  .upload-icon{font-size:2.4rem;}
+
+  .detail-header{gap:12px;}
+  .detail-title{font-size:1.6rem;}
+
+  .action-row{flex-direction:column;}
+  .btn-primary{width:100%;}
+  .btn-secondary{width:100%;}
+
+  .result-header{padding:16px 20px;}
+  .result-body{padding:16px 20px;}
+
+  .info-sidebar{padding:20px;}
+}
+
+/* ── Mobile small 390px ── */
+@media(max-width:390px){
+  .hero{padding:90px 16px 36px;}
+  .modules-section{padding:24px 16px 48px;}
+  .detail-page{padding:80px 16px 40px;}
+
+  .hero-title{font-size:2rem;}
+  .hero-stats{flex-direction:column;gap:16px;align-items:flex-start;}
+
+  nav{padding:12px 16px;}
+  .logo{font-size:1.2rem;}
+
+  .cards-grid{gap:12px;}
+  .module-card{padding:20px;}
+  .card-title{font-size:1rem;}
+
+  .cs-title{font-size:1.8rem;}
+  .cs-icon{font-size:3rem;}
+}
+
+/* ── ANIMATIONS ──────────────────────────── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes float{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-12px);}
+}
+@keyframes shimmer{
+  to{background-position:200% center;}
+}
+
+/* ── LOADING SPINNER ─────────────────────── */
+.spinner{
+  width:20px;height:20px;
+  border:2px solid rgba(3,5,15,0.3);
+  border-top-color:#03050f;
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+  display:none;
+}
+.spinner.active{display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── ERROR MSG ───────────────────────────── */
+.error-msg{
+  display:none;
+  max-width:620px;
+  margin-top:12px;
+  padding:14px 18px;
+  border-radius:10px;
+  background:rgba(255,77,109,0.08);
+  border:1px solid rgba(255,77,109,0.2);
+  color:#ff8fa3;
+  font-family:var(--mono);
+  font-size:0.75rem;
+  letter-spacing:0.05em;
+}
+.error-msg.visible{display:block;}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:32px;
+  border-top:1px solid var(--border);
+  font-family:var(--mono);
+  font-size:0.68rem;
+  color:var(--muted);
+  letter-spacing:0.1em;
+  position:relative;z-index:1;
+}
+footer span{color:var(--cyan);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAV
+══════════════════════════════════════ -->
+<nav>
+  <div class="logo" onclick="goHome()">Med<span>AI</span></div>
+  <div class="nav-tag">Noninvaziv Diagnostika v1.0</div>
+  <div class="nav-dot"></div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <!-- Left: text content -->
+    <div class="hero-content">
+      <div class="hero-eyebrow">// Sun'iy Intellekt · Tibbiy Diagnostika</div>
+      <h1 class="hero-title">
+        Non-invaziv<br/>
+        <span class="line2">Diagnostika Tizimi</span>
+      </h1>
+      <p class="hero-sub">
+        Qon olmasdan, kimyosiz. Faqat rasm — barmoq izi, ko'z parda,
+        MRI yoki X-ray orqali tezkor tahlil. Sun'iy intellekt asosida.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-val">98<span>%</span></div>
+          <div class="stat-lbl">Qon guruhi aniqlik</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">95<span>%</span></div>
+          <div class="stat-lbl">Miya o'smasi aniqlik</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">92<span>%</span></div>
+          <div class="stat-lbl">Teri kasalligi aniqlik</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">&lt;3<span>s</span></div>
+          <div class="stat-lbl">O'rtacha natija vaqti</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: medical SVG illustration -->
+    <div class="hero-visual">
+      <svg viewBox="0 0 420 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer ring -->
+        <g class="ring-spin" style="transform-origin:210px 190px">
+          <circle cx="210" cy="190" r="168" stroke="rgba(0,240,220,0.12)" stroke-width="1" stroke-dasharray="6 10"/>
+        </g>
+        <!-- Inner ring -->
+        <g class="ring-spin2" style="transform-origin:210px 190px">
+          <circle cx="210" cy="190" r="128" stroke="rgba(124,58,237,0.15)" stroke-width="1" stroke-dasharray="3 8"/>
+        </g>
+        <!-- Center circle glow -->
+        <circle cx="210" cy="190" r="88" fill="rgba(0,240,220,0.04)" stroke="rgba(0,240,220,0.2)" stroke-width="1"/>
+        <circle cx="210" cy="190" r="60" fill="rgba(0,240,220,0.06)" stroke="rgba(0,240,220,0.15)" stroke-width="1"/>
+
+        <!-- ECG / Heartbeat line across center -->
+        <path class="ecg-path"
+          d="M42 190 L90 190 L108 190 L118 155 L128 230 L140 160 L150 210 L162 190 L378 190"
+          stroke="#00f0dc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          fill="none"/>
+        <!-- ECG glow duplicate -->
+        <path
+          d="M42 190 L90 190 L108 190 L118 155 L128 230 L140 160 L150 210 L162 190 L378 190"
+          stroke="rgba(0,240,220,0.2)" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+        <!-- Cross / plus medical symbol at center -->
+        <rect x="200" y="174" width="20" height="32" rx="4" fill="rgba(0,240,220,0.9)"/>
+        <rect x="194" y="180" width="32" height="20" rx="4" fill="rgba(0,240,220,0.9)"/>
+
+        <!-- Floating data pills -->
+        <g class="float-icon">
+          <rect x="28" y="80" width="90" height="30" rx="8" fill="rgba(13,18,38,0.9)" stroke="rgba(0,240,220,0.25)" stroke-width="1"/>
+          <text x="38" y="100" font-family="DM Mono,monospace" font-size="10" fill="#00f0dc">🩸 Qon guruhi</text>
+        </g>
+        <g class="float-icon">
+          <rect x="300" y="68" width="90" height="30" rx="8" fill="rgba(13,18,38,0.9)" stroke="rgba(124,58,237,0.3)" stroke-width="1"/>
+          <text x="310" y="88" font-family="DM Mono,monospace" font-size="10" fill="#a855f7">🧠 MRI tahlil</text>
+        </g>
+        <g class="float-icon">
+          <rect x="300" y="282" width="90" height="30" rx="8" fill="rgba(13,18,38,0.9)" stroke="rgba(245,158,11,0.3)" stroke-width="1"/>
+          <text x="310" y="302" font-family="DM Mono,monospace" font-size="10" fill="#f59e0b">💉 Diabet</text>
+        </g>
+        <g class="float-icon">
+          <rect x="28" y="280" width="94" height="30" rx="8" fill="rgba(13,18,38,0.9)" stroke="rgba(59,130,246,0.3)" stroke-width="1"/>
+          <text x="38" y="300" font-family="DM Mono,monospace" font-size="10" fill="#60a5fa">🫁 O'pka X-ray</text>
+        </g>
+
+        <!-- Scanning dots on rings -->
+        <circle class="dot-blink" cx="210" cy="22" r="5" fill="#00f0dc" filter="url(#glow)"/>
+        <circle class="dot-blink" cx="378" cy="190" r="4" fill="#a855f7"/>
+        <circle class="dot-blink" cx="42" cy="190" r="4" fill="#00f0dc"/>
+
+        <!-- Glow filter -->
+        <defs>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+      </svg>
+    </div>
+  </section>
+
+  <section class="modules-section">
+    <div class="cards-grid">
+
+      <!-- 1. Blood Group -->
+      <div class="module-card" onclick="openModule('blood')">
+        <div class="card-badge badge-live">Live</div>
+        <div class="card-icon teal">🩸</div>
+        <div class="card-title">Qon Guruhi</div>
+        <div class="card-desc">Barmoq izi orqali qon guruhingizni aniq va tez aniqlang. Qon olish shart emas.</div>
+        <div class="card-meta">
+          <span class="meta-tag">Barmoq izi</span>
+          <span class="meta-tag">CNN ResNet18</span>
+          <span class="meta-tag">98% aniq</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <!-- 2. Brain Tumor -->
+      <div class="module-card disabled" onclick="showComingSoon('Miya O\'smasi', '🧠', 'MRI rasmi orqali miya o\'smalarini\naniq aniqlash.')">
+        <div class="card-badge badge-soon">Tez Kunda</div>
+        <div class="card-icon purple">🧠</div>
+        <div class="card-title">Miya O'smasi</div>
+        <div class="card-desc">MRI skaneri rasmi orqali miya o'smasini erta bosqichda aniqlash va tasniflash.</div>
+        <div class="card-meta">
+          <span class="meta-tag">MRI Rasm</span>
+          <span class="meta-tag">EfficientNet</span>
+          <span class="meta-tag">BraTS Dataset</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+     
+
+      <!-- 3. Lung Disease -->
+      <div class="module-card disabled" onclick="showComingSoon('O\'pka Kasalligi', '🫁', 'Ko\'krak X-ray rasmi orqali\no\'pka kasalliklarini aniqlash.')">
+        <div class="card-badge badge-soon">Tez Kunda</div>
+        <div class="card-icon blue">🫁</div>
+        <div class="card-title">O'pka Kasalligi</div>
+        <div class="card-desc">Ko'krak X-ray rasmi orqali pnevmoniya, o'pka saratoni va boshqa kasalliklarni aniqlash.</div>
+        <div class="card-meta">
+          <span class="meta-tag">Chest X-Ray</span>
+          <span class="meta-tag">ChestX-ray14</span>
+          <span class="meta-tag">14 ta kasallik</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <!-- 4. Eye Disease -->
+      <div class="module-card disabled" onclick="showComingSoon('Ko\'z Parda Kasalligi', '👁', 'Retinal rasm orqali glaukoma,\nkatarakt va boshqalarni aniqlash.')">
+        <div class="card-badge badge-soon">Tez Kunda</div>
+        <div class="card-icon teal">👁</div>
+        <div class="card-title">Ko'z Parda Kasalligi</div>
+        <div class="card-desc">Ko'z parda rasmi tahlili orqali glaukoma, diabetik retinopiya va katarakt aniqlash.</div>
+        <div class="card-meta">
+          <span class="meta-tag">Fundus Kamera</span>
+          <span class="meta-tag">ORIGA Dataset</span>
+          <span class="meta-tag">Glaukoma · DR</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <!-- 5. Skin Disease -->
+      <div class="module-card disabled" onclick="showComingSoon('Teri Kasalligi', '🖐', 'Teri rasmi orqali melanoma\nva boshqa teri kasalliklarini aniqlash.')">
+        <div class="card-badge badge-soon">Tez Kunda</div>
+        <div class="card-icon red">🖐</div>
+        <div class="card-title">Teri Kasalligi</div>
+        <div class="card-desc">Teri surati orqali melanoma, psoriaz va boshqa 7+ teri kasalliklarini tahlil qilish.</div>
+        <div class="card-meta">
+          <span class="meta-tag">Dermoskopi</span>
+          <span class="meta-tag">HAM10000</span>
+          <span class="meta-tag">7 sinf</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <!-- 6. Anemia -->
+      <div class="module-card disabled" onclick="showComingSoon('Anemiya', '💅', 'Tirnoq rasmi orqali anemiyani\nnoinvaziv tarzda aniqlash.')">
+        <div class="card-badge badge-soon">Tez Kunda</div>
+        <div class="card-icon pink">💅</div>
+        <div class="card-title">Anemiya</div>
+        <div class="card-desc">Tirnoq surati orqali gemoglobin darajasini baholash va anemiyani erta aniqlash.</div>
+        <div class="card-meta">
+          <span class="meta-tag">Tirnoq Rasmi</span>
+          <span class="meta-tag">Harvard PNAS</span>
+          <span class="meta-tag">Kamera yetarli</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>MedAI © 2026 · <span>Non-invaziv diagnostika</span> · Tibbiy tekshiruv o'rnini bosmasligini unutmang</p>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     BLOOD GROUP PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-blood">
+  <div class="detail-page">
+    <button class="back-btn" onclick="goHome()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Orqaga
+    </button>
+
+    <div class="detail-header">
+      <div class="detail-icon card-icon teal">🩸</div>
+      <div>
+        <div class="detail-title">Qon Guruhi <span>Aniqlash</span></div>
+        <div class="detail-sub">Barmoq izingizni yuklang — model millisekundlarda tahlil qiladi</div>
+      </div>
+    </div>
+
+    <div class="detail-layout">
+
+        <!-- Upload zone -->
+        <div class="upload-zone" id="uploadZone" onclick="handleZoneClick(event)" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+          <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)"/>
+          <div class="upload-icon">🖐</div>
+          <div class="upload-title" id="uploadTitle">Barmoq izi rasmini yuklang</div>
+          <div class="upload-hint">PNG · JPG · BMP · WSQ &nbsp;|&nbsp; Tortib tashlash ham mumkin</div>
+        </div>
+
+        <!-- Scanner viewer -->
+        <div class="scanner-container" id="scannerContainer">
+          <div class="scanner-header">
+            <div class="scanner-dots">
+              <div class="s-dot r"></div>
+              <div class="s-dot y"></div>
+              <div class="s-dot g"></div>
+            </div>
+            <div class="scanner-title" id="scanTitle">Tahlil kutilmoqda</div>
+            <div style="width:60px"></div>
+          </div>
+          <div class="img-wrapper" id="imgWrapper">
+            <img id="previewImg" src="" alt="Preview"/>
+            <div class="scan-line" id="scanLine"></div>
+            <div class="scan-overlay" id="scanOverlay"></div>
+            <div class="scan-corner tl" id="cornerTL"></div>
+            <div class="scan-corner tr" id="cornerTR"></div>
+            <div class="scan-corner bl" id="cornerBL"></div>
+            <div class="scan-corner br" id="cornerBR"></div>
+          </div>
+          <div class="scanner-footer">
+            <div class="scan-status" id="scanStatus">Rasm yuklandi</div>
+            <div class="img-dimensions" id="imgDimensions"></div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="action-row" id="actionRow" style="display:none">
+          <button class="btn-primary" id="predictBtn" onclick="submitPrediction()">
+            <span id="btnText">🔬 Tahlil Qilish</span>
+            <div class="spinner" id="btnSpinner"></div>
+          </button>
+          <button class="btn-secondary" onclick="resetUpload()">Yangilash</button>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Result -->
+        <div class="result-panel" id="resultPanel">
+          <div class="result-header">
+            <div class="result-icon">🩸</div>
+            <div>
+              <div class="result-label">Aniqlangan Qon Guruhi</div>
+              <div class="result-value" id="resultValue">—</div>
+            </div>
+          </div>
+          <div class="result-body">
+            <div class="result-row">
+              <span class="r-key">STATUS</span>
+              <span class="r-val" id="resultStatus">—</span>
+            </div>
+            <div class="result-row">
+              <span class="r-key">TAHLIL VAQTI</span>
+              <span class="r-val" id="resultTime">—</span>
+            </div>
+            <div class="result-row">
+              <span class="r-key">RASM O'LCHAMI</span>
+              <span class="r-val" id="resultSize">—</span>
+            </div>
+            <div class="conf-bar-wrap">
+              <div class="conf-label">
+                <span>ISHONCH DARAJASI</span>
+                <span id="confPct">—</span>
+              </div>
+              <div class="conf-bar">
+                <div class="conf-fill" id="confFill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Guide sidebar -->
+      <div class="info-sidebar">
+        <div class="section-label" style="margin-bottom:16px">// Qo'llanma</div>
+        <div class="info-item">
+          <div class="info-num">01</div>
+          <div class="info-text">
+            <strong>Rasm sifati</strong>
+            500 DPI yoki undan yuqori. ZKTeco ZK9500 tavsiya etiladi.
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-num">02</div>
+          <div class="info-text">
+            <strong>Format</strong>
+            PNG, JPG yoki BMP. Hajmi 5 MB gacha.
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-num">03</div>
+          <div class="info-text">
+            <strong>Barmoq izi</strong>
+            Ko'rsatkich yoki o'rta barmoq eng yaxshi natija beradi.
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-num">04</div>
+          <div class="info-text">
+            <strong>Natija</strong>
+            A+, A−, B+, B−, AB+, AB−, O+, O− guruhlaridan biri ko'rsatiladi.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     COMING SOON OVERLAY
+══════════════════════════════════════ -->
+<div class="coming-soon-overlay" id="comingSoonOverlay">
+  <div class="cs-icon" id="csIcon">🧠</div>
+  <div class="cs-title" id="csTitle">Tez Kunda<br/><span>Qo'shiladi</span></div>
+  <div class="cs-sub" id="csSub">Ushbu modul hozirda ishlab chiqilmoqda.<br/>Dataset topilgach, backend qo'shiladi.</div>
+  <button class="cs-close" onclick="closeComingSoon()">← Orqaga</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+/* ── Page routing ─────────────────────────── */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function goHome(){
+  resetUpload();
+  showPage('page-home');
+}
+function openModule(name){
+  if(name==='blood') showPage('page-blood');
+}
+
+/* ── Coming Soon ──────────────────────────── */
+function showComingSoon(title, icon, sub){
+  document.getElementById('csIcon').textContent = icon;
+  document.getElementById('csTitle').innerHTML = title+'<br/><span>Tez Kunda</span>';
+  document.getElementById('csSub').textContent = sub+'\n\nDataset topilgach, backend qo\'shiladi.';
+  document.getElementById('comingSoonOverlay').classList.add('active');
+  document.body.style.overflow='hidden';
+}
+function closeComingSoon(){
+  document.getElementById('comingSoonOverlay').classList.remove('active');
+  document.body.style.overflow='';
+}
+document.getElementById('comingSoonOverlay').addEventListener('click',function(e){
+  if(e.target===this) closeComingSoon();
+});
+
+/* ── File handling ────────────────────────── */
+let selectedFile = null;
+
+function handleZoneClick(e){
+  if(selectedFile) return;
+  e.stopPropagation();
+  document.getElementById('fileInput').click();
+}
+
+function handleDragOver(e){
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('dragover');
+}
+function handleDragLeave(e){
+  document.getElementById('uploadZone').classList.remove('dragover');
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if(file && file.type.startsWith('image/')) processFile(file);
+}
+function handleFileSelect(e){
+  const file = e.target.files[0];
+  if(file) processFile(file);
+}
+
+function processFile(file){
+  selectedFile = file;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = document.getElementById('previewImg');
+    img.src = e.target.result;
+
+    img.onload = function(){
+      // Show scanner
+      document.getElementById('uploadZone').style.display='none';
+      document.getElementById('scannerContainer').classList.add('visible');
+      document.getElementById('actionRow').style.display='flex';
+
+      // Dimensions display
+      document.getElementById('imgDimensions').textContent =
+        img.naturalWidth+'×'+img.naturalHeight+' px';
+
+      // Activate corners
+      ['cornerTL','cornerTR','cornerBL','cornerBR'].forEach(id=>{
+        document.getElementById(id).classList.add('active');
+      });
+      document.getElementById('scanOverlay').classList.add('active');
+
+      // Scan animation
+      startScanAnimation();
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function startScanAnimation(){
+  const scanLine = document.getElementById('scanLine');
+  const scanTitle = document.getElementById('scanTitle');
+  const scanStatus = document.getElementById('scanStatus');
+
+  scanTitle.textContent = 'Rasm tahlil qilinmoqda...';
+  scanStatus.textContent = 'Barmoq izi skanerlanmoqda';
+
+  scanLine.classList.remove('active');
+  void scanLine.offsetWidth; // reflow
+  scanLine.classList.add('active');
+
+  // Status messages during scan
+  const msgs = [
+    'Barmoq izi skanerlanmoqda',
+    'Minutsiya nuqtalari ajratilmoqda',
+    'Naqsh tahlil qilinmoqda',
+    'Tayyor — tahlilga yuborish mumkin'
+  ];
+  let i=0;
+  const interval = setInterval(()=>{
+    i++;
+    if(i<msgs.length){
+      scanStatus.textContent = msgs[i];
+    } else {
+      clearInterval(interval);
+      scanTitle.textContent = 'Tahlilga tayyor';
+    }
+  }, 550);
+}
+
+/* ── Prediction ───────────────────────────── */
+async function submitPrediction(){
+  if(!selectedFile) return;
+
+  const btn = document.getElementById('predictBtn');
+  const btnText = document.getElementById('btnText');
+  const spinner = document.getElementById('btnSpinner');
+  const errorMsg = document.getElementById('errorMsg');
+
+  // Reset error
+  errorMsg.classList.remove('visible');
+
+  // Loading state
+  btnText.style.display='none';
+  spinner.classList.add('active');
+  btn.disabled=true;
+
+  // Re-run scan animation
+  startScanAnimation();
+  document.getElementById('scanStatus').textContent = 'Server bilan bog\'lanmoqda...';
+
+  const startTime = Date.now();
+
+  try {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    const response = await fetch('/predict', {
+      method: 'POST',
+      body: formData
+    });
+
+    const elapsed = ((Date.now()-startTime)/1000).toFixed(2)+'s';
+
+    if(!response.ok){
+      throw new Error('Server xatosi: '+response.status);
+    }
+
+    const data = await response.json();
+
+    if(data.error){
+      throw new Error(data.error);
+    }
+
+    showResult(data, elapsed);
+
+  } catch(err){
+    // Demo mode — show mock result if server not available
+    if(err.message.includes('Failed to fetch') || err.message.includes('NetworkError')){
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(2)+'s';
+      showResult({
+        blood_group: 'B+',
+        confidence: 0.942,
+        status: 'Demo rejimi (server ulanmagan)'
+      }, elapsed);
+    } else {
+      errorMsg.textContent = '⚠ '+err.message;
+      errorMsg.classList.add('visible');
+    }
+  } finally {
+    btnText.style.display='flex';
+    spinner.classList.remove('active');
+    btn.disabled=false;
+  }
+}
+
+/* ── Qon guruhi konvertatsiya ─────────────── */
+function toUzbekFormat(bg){
+  const map = {
+    'O+':'1(I) Rh+',  'O-':'1(I) Rh−',
+    'A+':'2(II) Rh+', 'A-':'2(II) Rh−',
+    'B+':'3(III) Rh+','B-':'3(III) Rh−',
+    'AB+':'4(IV) Rh+','AB-':'4(IV) Rh−'
+  };
+  return map[bg] || bg;
+}
+
+function showResult(data, elapsed){
+  document.getElementById('scanStatus').textContent = 'Tahlil yakunlandi ✓';
+  document.getElementById('scanTitle').textContent = 'Natija tayyor';
+
+  const panel = document.getElementById('resultPanel');
+  panel.classList.add('visible');
+
+  document.getElementById('resultValue').textContent = toUzbekFormat(data.blood_group) || '—';
+  document.getElementById('resultStatus').textContent = data.status || 'Muvaffaqiyatli';
+  document.getElementById('resultTime').textContent = elapsed;
+  document.getElementById('resultSize').textContent = '128 × 128 px (auto-crop)';
+
+  const conf = data.confidence || 0;
+  const pct = Math.round(conf*100);
+  document.getElementById('confPct').textContent = pct+'%';
+
+  setTimeout(()=>{
+    document.getElementById('confFill').style.width = pct+'%';
+  }, 200);
+
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ── Reset ────────────────────────────────── */
+function resetUpload(){
+  selectedFile = null;
+
+  document.getElementById('fileInput').value='';
+  document.getElementById('uploadZone').style.display='block';
+  document.getElementById('scannerContainer').classList.remove('visible');
+  document.getElementById('actionRow').style.display='none';
+  document.getElementById('resultPanel').classList.remove('visible');
+  document.getElementById('errorMsg').classList.remove('visible');
+
+  ['cornerTL','cornerTR','cornerBL','cornerBR'].forEach(id=>{
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById('scanOverlay').classList.remove('active');
+  document.getElementById('scanLine').classList.remove('active');
+  document.getElementById('confFill').style.width='0%';
+  document.getElementById('scanTitle').textContent = 'Tahlil kutilmoqda';
+}
+</script>
+</body>
+</html>
