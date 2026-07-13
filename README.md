@@ -45,3 +45,25 @@ python train.py
 python app.py
 ```
 Keyin brauzerda: http://127.0.0.1:5000
+
+
+
+
+
+MedAI — Noninvaziv Tibbiy Diagnostika Tizimi
+
+🇺🇿 O'zbekistonda yaratilgan | Sun'iy Intellekt | PyTorch | Flask
+
+Sun'iy intellekt yordamida barmoq izi, MRI, X-ray va ko'z parda rasmlari orqali kasalliklarni qon olmasdan, kimyosiz, faqat rasm orqali aniqlash platformasi.
+
+🟢 Hozir ishlaydigan modul
+ModulUsulAniqlik🩸 Qon guruhi aniqlashBarmoq izi (ZKTeco Live20R)92.5%
+🔜 Kelajakda qo'shiladi
+ModulUsul🧠 Miya o'smasiMRI rasmi🫁 O'pka kasalligiKo'krak X-ray👁 Ko'z parda kasalligiRetinal Fundus rasmi🖐 Teri kasalligiDermoskopik rasm💅 AnemiyaTirnoq rasmi
+
+⚙️ Texnologiyalar
+Python Flask PyTorch ResNet18 HTML/CSS/JS ZKTeco Live20R
+
+
+⚠️ Muhim
+MedAI tibbiy tashxis qo'ymaydi. Sun'iy intellekt dastlabki tahlil qiladi — qaror va mas'uliyat har doim mutaxassis shifokor qo'lida qoladi.
