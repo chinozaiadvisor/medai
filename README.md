@@ -50,9 +50,6 @@ Keyin brauzerda: http://127.0.0.1:5000
 
 
 
-MedAI — Noninvaziv Tibbiy Diagnostika Tizimi
-
-🇺🇿 O'zbekistonda yaratilgan | Sun'iy Intellekt | PyTorch | Flask
 
 Sun'iy intellekt yordamida barmoq izi, MRI, X-ray va ko'z parda rasmlari orqali kasalliklarni qon olmasdan, kimyosiz, faqat rasm orqali aniqlash platformasi.
 
