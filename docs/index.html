@@ -916,6 +916,35 @@ footer{
   position:relative;z-index:1;
 }
 footer span{color:var(--cyan);}
+
+
+/* ── MRI TABS ─────────────────────────── */
+.mri-tabs{
+  display:flex;gap:8px;
+  margin-bottom:8px;
+  max-width:680px;margin-left:auto;margin-right:auto;
+}
+.mri-tab{
+  flex:1;padding:12px 20px;
+  font-family:var(--head);font-size:0.9rem;font-weight:600;
+  border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);
+  cursor:pointer;transition:all 0.2s;
+}
+.mri-tab.active{
+  background:rgba(0,240,220,0.1);
+  border-color:var(--cyan);color:var(--cyan);
+}
+.mri-tab-info{
+  max-width:680px;margin:0 auto 20px;
+  font-family:var(--mono);font-size:0.72rem;
+  color:var(--muted);letter-spacing:0.08em;
+  padding:8px 12px;
+  background:rgba(255,255,255,0.02);
+  border-radius:6px;border:1px solid var(--border);
+}
+
+
 </style>
 </head>
 <body>
@@ -1046,8 +1075,8 @@ footer span{color:var(--cyan);}
       </div>
 
       <!-- 2. Brain Tumor -->
-      <div class="module-card disabled" onclick="showComingSoon('Miya O\'smasi', '🧠', 'MRI rasmi orqali miya o\'smalarini\naniq aniqlash.')">
-        <div class="card-badge badge-soon">Tez Kunda</div>
+<div class="module-card" onclick="openModule('mri')">
+  <div class="card-badge badge-live">Live</div>
         <div class="card-icon purple">🧠</div>
         <div class="card-title">Miya O'smasi</div>
         <div class="card-desc">MRI skaneri rasmi orqali miya o'smasini erta bosqichda aniqlash va tasniflash.</div>
@@ -1263,6 +1292,151 @@ footer span{color:var(--cyan);}
   </div>
 </div>
 
+
+<!-- ══════════════════════════════════════
+     MRI PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-mri">
+  <div class="detail-page">
+    <button class="back-btn" onclick="goHome()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Orqaga
+    </button>
+
+    <div class="detail-header">
+      <div class="detail-icon card-icon purple">🧠</div>
+      <div>
+        <div class="detail-title">Miya <span>MRI Tahlili</span></div>
+        <div class="detail-sub">O'sma yoki Alzheimer kasalligini aniqlash uchun MRI rasmini yuklang</div>
+      </div>
+    </div>
+
+    <!-- Tab tanlash -->
+    <div class="mri-tabs">
+      <button class="mri-tab active" id="tab-tumor" onclick="switchMriTab('tumor')">🧬 Miya O'smasi</button>
+      <button class="mri-tab" id="tab-alzheimer" onclick="switchMriTab('alzheimer')">🫧 Alzheimer</button>
+    </div>
+
+    <!-- Tab info -->
+    <div class="mri-tab-info" id="mri-tab-info">
+      <span id="mri-tab-desc">Glioma, Meningioma, Pituitary yoki O'sma yo'q — 4 sinf tahlili</span>
+    </div>
+
+    <div class="detail-layout">
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="mriUploadZone" ondrop="handleMriDrop(event)" ondragover="handleDragOverMri(event)" ondragleave="handleDragLeaveMri(event)" onclick="handleMriZoneClick(event)">
+        <input type="file" id="mriFileInput" accept="image/*" onchange="handleMriFileSelect(event)" style="display:none"/>
+        <div class="upload-icon">🧠</div>
+        <div class="upload-title" id="mriUploadTitle">MRI rasmini yuklang</div>
+        <div class="upload-hint">PNG · JPG · JPEG &nbsp;|&nbsp; Tortib tashlash ham mumkin</div>
+      </div>
+
+      <!-- Scanner viewer -->
+      <div class="scanner-container" id="mriScannerContainer">
+        <div class="scanner-header">
+          <div class="scanner-dots">
+            <div class="s-dot r"></div>
+            <div class="s-dot y"></div>
+            <div class="s-dot g"></div>
+          </div>
+          <div class="scanner-title" id="mriScanTitle">Tahlil kutilmoqda</div>
+          <div style="width:60px"></div>
+        </div>
+        <div class="img-wrapper" id="mriImgWrapper">
+          <img id="mriPreviewImg" src="" alt="MRI Preview"/>
+          <div class="scan-line" id="mriScanLine"></div>
+          <div class="scan-overlay" id="mriScanOverlay"></div>
+          <div class="scan-corner tl" id="mriCornerTL"></div>
+          <div class="scan-corner tr" id="mriCornerTR"></div>
+          <div class="scan-corner bl" id="mriCornerBL"></div>
+          <div class="scan-corner br" id="mriCornerBR"></div>
+        </div>
+        <div class="scanner-footer">
+          <div class="scan-status" id="mriScanStatus">Rasm yuklandi</div>
+          <div class="img-dimensions" id="mriImgDimensions"></div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="action-row" id="mriActionRow" style="display:none">
+        <button class="btn-primary" id="mriPredictBtn" onclick="submitMriPrediction()">
+          <span id="mriBtnText">🔬 Tahlil Qilish</span>
+          <div class="spinner" id="mriBtnSpinner"></div>
+        </button>
+        <button class="btn-secondary" onclick="resetMriUpload()">Yangilash</button>
+      </div>
+
+      <!-- Error -->
+      <div class="error-msg" id="mriErrorMsg"></div>
+
+      <!-- Tumor natija -->
+      <div class="result-panel" id="mriResultPanel">
+        <div class="result-header" id="mriResultHeader">
+          <div class="result-icon" id="mriResultIcon">🧠</div>
+          <div>
+            <div class="result-label" id="mriResultLabel">Tahlil natijasi</div>
+            <div class="result-value" id="mriResultValue">—</div>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="result-row">
+            <span class="r-key">XAVF DARAJASI</span>
+            <span class="r-val" id="mriResultXavf">—</span>
+          </div>
+          <div class="result-row">
+            <span class="r-key">TAHLIL VAQTI</span>
+            <span class="r-val" id="mriResultTime">—</span>
+          </div>
+          <div class="result-row" id="mriIzohRow">
+            <span class="r-key">IZOH</span>
+            <span class="r-val" id="mriResultIzoh" style="font-size:0.8rem;line-height:1.5">—</span>
+          </div>
+          <div class="conf-bar-wrap">
+            <div class="conf-label">
+              <span>ISHONCH DARAJASI</span>
+              <span id="mriConfPct">—</span>
+            </div>
+            <div class="conf-bar">
+              <div class="conf-fill" id="mriConfFill"></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 28px;border-top:1px solid rgba(255,255,255,0.04)">
+          <p style="font-size:0.72rem;color:var(--muted);font-family:var(--mono);line-height:1.6">
+            ⚠ Bu dastlabki AI tahlili. Yakuniy tashxis uchun mutaxassis shifokorga murojaat qiling.
+          </p>
+        </div>
+      </div>
+
+      <!-- Qo'llanma -->
+      <div class="info-sidebar">
+        <div class="section-label" style="margin-bottom:16px">// Qo'llanma</div>
+        <div class="info-item">
+          <div class="info-num">01</div>
+          <div class="info-text"><strong>Rasm turi</strong>Miya MRI rasmi (T1, T2 yoki FLAIR).</div>
+        </div>
+        <div class="info-item">
+          <div class="info-num">02</div>
+          <div class="info-text"><strong>Format</strong>PNG yoki JPG. Hajmi 10 MB gacha.</div>
+        </div>
+        <div class="info-item">
+          <div class="info-num">03</div>
+          <div class="info-text"><strong>O'sma tahlili</strong>Glioma, Meningioma, Pituitary yoki O'sma yo'q — 4 sinf.</div>
+        </div>
+        <div class="info-item">
+          <div class="info-num">04</div>
+          <div class="info-text"><strong>Alzheimer tahlili</strong>NonDemented, VeryMild, Mild, Moderate — 4 bosqich.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
 <!-- ══════════════════════════════════════
      COMING SOON OVERLAY
 ══════════════════════════════════════ -->
@@ -1285,10 +1459,12 @@ function showPage(id){
 }
 function goHome(){
   resetUpload();
+  resetMriUpload();
   showPage('page-home');
 }
 function openModule(name){
   if(name==='blood') showPage('page-blood');
+  if(name==='mri')   showPage('page-mri');
 }
 
 /* ── Coming Soon ──────────────────────────── */
@@ -1515,6 +1691,160 @@ function resetUpload(){
   document.getElementById('confFill').style.width='0%';
   document.getElementById('scanTitle').textContent = 'Tahlil kutilmoqda';
 }
+
+
+/* ── MRI Tab ──────────────────────────── */
+let mriActiveTab = 'tumor';
+
+function switchMriTab(tab){
+  mriActiveTab = tab;
+  document.getElementById('tab-tumor').classList.toggle('active', tab==='tumor');
+  document.getElementById('tab-alzheimer').classList.toggle('active', tab==='alzheimer');
+  document.getElementById('mri-tab-desc').textContent = tab==='tumor'
+    ? 'Glioma, Meningioma, Pituitary yoki O\'sma yo\'q — 4 sinf tahlili'
+    : 'NonDemented, VeryMild, Mild, Moderate — Alzheimer 4 bosqich tahlili';
+  resetMriUpload();
+}
+
+/* ── MRI File handling ────────────────── */
+let mriSelectedFile = null;
+
+function handleMriZoneClick(e){
+  if(mriSelectedFile) return;
+  e.stopPropagation();
+  document.getElementById('mriFileInput').click();
+}
+function handleDragOverMri(e){
+  e.preventDefault();
+  document.getElementById('mriUploadZone').classList.add('dragover');
+}
+function handleDragLeaveMri(e){
+  document.getElementById('mriUploadZone').classList.remove('dragover');
+}
+function handleMriDrop(e){
+  e.preventDefault();
+  document.getElementById('mriUploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if(file && file.type.startsWith('image/')) processMriFile(file);
+}
+function handleMriFileSelect(e){
+  const file = e.target.files[0];
+  if(file) processMriFile(file);
+}
+
+function processMriFile(file){
+  mriSelectedFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = document.getElementById('mriPreviewImg');
+    img.src = e.target.result;
+    img.onload = function(){
+      document.getElementById('mriUploadZone').style.display='none';
+      document.getElementById('mriScannerContainer').classList.add('visible');
+      document.getElementById('mriActionRow').style.display='flex';
+      document.getElementById('mriImgDimensions').textContent = img.naturalWidth+'×'+img.naturalHeight+' px';
+      ['mriCornerTL','mriCornerTR','mriCornerBL','mriCornerBR'].forEach(id=>{
+        document.getElementById(id).classList.add('active');
+      });
+      document.getElementById('mriScanOverlay').classList.add('active');
+      startMriScanAnimation();
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function startMriScanAnimation(){
+  const scanLine = document.getElementById('mriScanLine');
+  const scanTitle = document.getElementById('mriScanTitle');
+  const scanStatus = document.getElementById('mriScanStatus');
+  scanTitle.textContent = 'MRI tahlil qilinmoqda...';
+  scanLine.classList.remove('active');
+  void scanLine.offsetWidth;
+  scanLine.classList.add('active');
+  const msgs = ['MRI rasmi skanerlanmoqda','Neyron tarmoq tahlil qilmoqda','Xususiyatlar ajratilmoqda','Tayyor — tahlilga yuborish mumkin'];
+  let i=0;
+  const iv = setInterval(()=>{
+    i++;
+    if(i<msgs.length) scanStatus.textContent=msgs[i];
+    else { clearInterval(iv); scanTitle.textContent='Tahlilga tayyor'; }
+  },550);
+}
+
+/* ── MRI Prediction ───────────────────── */
+async function submitMriPrediction(){
+  if(!mriSelectedFile) return;
+  const btn = document.getElementById('mriPredictBtn');
+  const btnText = document.getElementById('mriBtnText');
+  const spinner = document.getElementById('mriBtnSpinner');
+  const errorMsg = document.getElementById('mriErrorMsg');
+  errorMsg.classList.remove('visible');
+  btnText.style.display='none';
+  spinner.classList.add('active');
+  btn.disabled=true;
+  startMriScanAnimation();
+  const startTime = Date.now();
+  try {
+    const formData = new FormData();
+    formData.append('file', mriSelectedFile);
+    const endpoint = mriActiveTab==='tumor' ? '/predict_tumor' : '/predict_alzheimer';
+    const response = await fetch(endpoint, { method:'POST', body:formData });
+    const elapsed = ((Date.now()-startTime)/1000).toFixed(2)+'s';
+    if(!response.ok) throw new Error('Server xatosi: '+response.status);
+    const data = await response.json();
+    if(data.error) throw new Error(data.error);
+    showMriResult(data, elapsed);
+  } catch(err){
+    if(err.message.includes('Failed to fetch') || err.message.includes('NetworkError')){
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(2)+'s';
+      if(mriActiveTab==='tumor'){
+        showMriResult({ name:'Glioma', xavf:'⚠ Rakli (Malignant)', izoh:'Demo rejimi — server ulanmagan.', confidence:0.91 }, elapsed);
+      } else {
+        showMriResult({ name:'NonDemented', daraja:'✅ Sog\'lom', izoh:'Demo rejimi — server ulanmagan.', confidence:0.95 }, elapsed);
+      }
+    } else {
+      errorMsg.textContent = '⚠ '+err.message;
+      errorMsg.classList.add('visible');
+    }
+  } finally {
+    btnText.style.display='flex';
+    spinner.classList.remove('active');
+    btn.disabled=false;
+  }
+}
+
+function showMriResult(data, elapsed){
+  document.getElementById('mriScanStatus').textContent = 'Tahlil yakunlandi ✓';
+  document.getElementById('mriScanTitle').textContent = 'Natija tayyor';
+  const panel = document.getElementById('mriResultPanel');
+  panel.classList.add('visible');
+  document.getElementById('mriResultValue').textContent = data.name || '—';
+  document.getElementById('mriResultXavf').textContent = data.xavf || data.daraja || '—';
+  document.getElementById('mriResultTime').textContent = elapsed;
+  document.getElementById('mriResultIzoh').textContent = data.izoh || '—';
+  const conf = data.confidence || 0;
+  const pct = Math.round(conf*100);
+  document.getElementById('mriConfPct').textContent = pct+'%';
+  setTimeout(()=>{ document.getElementById('mriConfFill').style.width=pct+'%'; },200);
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function resetMriUpload(){
+  mriSelectedFile = null;
+  document.getElementById('mriFileInput').value='';
+  document.getElementById('mriUploadZone').style.display='block';
+  document.getElementById('mriScannerContainer').classList.remove('visible');
+  document.getElementById('mriActionRow').style.display='none';
+  document.getElementById('mriResultPanel').classList.remove('visible');
+  document.getElementById('mriErrorMsg').classList.remove('visible');
+  ['mriCornerTL','mriCornerTR','mriCornerBL','mriCornerBR'].forEach(id=>{
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById('mriScanOverlay').classList.remove('active');
+  document.getElementById('mriScanLine').classList.remove('active');
+  document.getElementById('mriConfFill').style.width='0%';
+  document.getElementById('mriScanTitle').textContent='Tahlil kutilmoqda';
+}
+
 </script>
 </body>
 </html>
